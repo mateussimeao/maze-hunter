@@ -205,15 +205,17 @@ def bfs(map_combined, start, end):
   return 'NONE'  # Retorna None se não houver caminho
 
 
-def move_player(player_pos, treasures, map_combined, search):
+def move_player(player_pos, treasures, map_combined, search, impossible_treasures, last_closest_treasure):
   #global player_pos, treasures, map_combined
-  
-  if not treasures:
+  valid_treasures = [t for t in treasures if t not in impossible_treasures]
+  if not valid_treasures:
     return 'GIVEUP'  # Não há mais tesouros
 
   #Encontre o tesouro mais próximo
-  closest_treasure = min(treasures,
-                         key=lambda t: manhattan_distance(player_pos, t))
+  if last_closest_treasure not in treasures:
+    closest_treasure = min(valid_treasures,
+                          key=lambda t: manhattan_distance(player_pos, t))
+    last_closest_treasure = closest_treasure
 
   #Encontre o caminho para o tesouro mais próximo
   if search == 'd':
@@ -235,8 +237,12 @@ def move_player(player_pos, treasures, map_combined, search):
       return 'LEFT'
     elif next_step[1] == player_pos[1] + 1:
       return 'RIGHT'
+    
+  else:
+    impossible_treasures.append(closest_treasure)
+    return "NONE"  
 
-  return 'GIVEUP'  # Não deveria chegar aqui
+  #return 'GIVEUP'  # Não deveria chegar aqui
 
 
 def manhattan_distance(pos1, pos2):
@@ -276,13 +282,11 @@ def run_game(player_pos, treasures, map_combined, search):
   running = True
   score = 0
   steps = 0
+  impossible_treasures = []
+  last_closest_treasure = ()
   while running:
-    # Random movement for now
-    print("before move")
-    direction = move_player(player_pos, treasures, map_combined, search)
-    print(direction)
-    print("after move")
-    #direction = manual_move() # Usar WASD
+    direction = move_player(player_pos, treasures, map_combined, search, impossible_treasures, last_closest_treasure)
+
     score -= 1
   
     next_pos = player_pos
