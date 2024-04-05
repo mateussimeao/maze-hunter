@@ -121,29 +121,6 @@ def combine_map():
 
   return map_combined
 
-def combine_map_bfs():
-    map_combined = []
-
-    for i in range(maze_size):
-        row = []
-        for j in range(maze_size):
-            # Adicione elementos de cada grade à grade 'map'
-            combined_element = {
-                'treasure': [i, j] in treasures,
-                'water': [i, j] in water,
-                'wall': [i, j] in walls
-            }
-            row.append(combined_element)
-
-        # Adicione a linha combinada à grade 'map'
-        map_combined.append(row)
-
-    return map_combined
-# Use a função para obter a grade combinada
-#map_combined = combine_map()
-# print(map_combined)
-
-
 def dijkstra(map_combined, start, end):
   heap = [(0, start, [])]
   visited = set()
@@ -170,10 +147,10 @@ def dijkstra(map_combined, start, end):
       if 0 <= n_row < maze_size and 0 <= n_col < maze_size and not map_combined[
           n_row][n_col]['wall']:
         new_cost = cost + map_combined[n_row][n_col].get(
-            'weight', 1)  # Custo considerando 'weight'
+            'weight', 1)  # Custo considerando o peso da agua
         heapq.heappush(heap, (new_cost, (n_row, n_col), path + [neighbor]))
 
-  return None  # Retorna None se não houver caminho
+  return None
 
 
 def bfs(map_combined, start, end):
@@ -202,22 +179,21 @@ def bfs(map_combined, start, end):
           n_row][n_col]['wall']:
         queue.append(((n_row, n_col), path + [neighbor]))
 
-  return 'NONE'  # Retorna None se não houver caminho
+  return None
 
 
 def move_player(player_pos, treasures, map_combined, search, impossible_treasures, last_closest_treasure):
   #global player_pos, treasures, map_combined
   valid_treasures = [t for t in treasures if t not in impossible_treasures]
   if not valid_treasures:
-    return 'GIVEUP'  # Não há mais tesouros
+    return 'GIVEUP'
 
-  #Encontre o tesouro mais próximo
+  
   if last_closest_treasure not in treasures:
-    closest_treasure = min(valid_treasures,
-                          key=lambda t: manhattan_distance(player_pos, t))
+    closest_treasure = min(valid_treasures, key=lambda t: manhattan_distance(player_pos, t))
     last_closest_treasure = closest_treasure
-
-  #Encontre o caminho para o tesouro mais próximo
+  else:
+    closest_treasure = last_closest_treasure  
   if search == 'd':
     path_to_treasure = dijkstra(map_combined, tuple(player_pos),
                                 tuple(closest_treasure))
@@ -226,7 +202,6 @@ def move_player(player_pos, treasures, map_combined, search, impossible_treasure
                                 tuple(closest_treasure))
 
   if path_to_treasure:
-    #A partir do primeiro passo no caminho, determine a direção
     next_step = path_to_treasure[0]
 
     if next_step[0] == player_pos[0] - 1:
@@ -242,7 +217,6 @@ def move_player(player_pos, treasures, map_combined, search, impossible_treasure
     impossible_treasures.append(closest_treasure)
     return "NONE"  
 
-  #return 'GIVEUP'  # Não deveria chegar aqui
 
 
 def manhattan_distance(pos1, pos2):
@@ -360,8 +334,7 @@ def run_game(player_pos, treasures, map_combined, search):
 
 scores_d = []
 scores_b = []
-for _ in range(3):
-    # Código para reiniciar as variáveis necessárias antes de cada execução
+for _ in range(15):
     player_pos = [
       random.randint(0, maze_size - 1),
       random.randint(0, maze_size - 1)
@@ -383,12 +356,11 @@ for _ in range(3):
     water = generate_water(slope)
     map_combined = combine_map()
   
-    final_score_bfs = run_game(player_pos, treasures, map_combined, 'b')  # Chama a função que contém o código do jogo
+    final_score_bfs = run_game(player_pos, treasures, map_combined, 'b')
     scores_b.append(final_score_bfs)
 
     # Armazena o score da execução atual na lista de scores
-for _ in range(3):
-    # Código para reiniciar as variáveis necessárias antes de cada execução
+for _ in range(15):
     player_pos = [
       random.randint(0, maze_size - 1),
       random.randint(0, maze_size - 1)
@@ -412,34 +384,7 @@ for _ in range(3):
   
     final_score_dijkstra = run_game(player_pos, treasures, map_combined, 'd')
     scores_d.append(final_score_dijkstra) 
-    
-'''
-# Tabela
-print("Scores de cada execução:")
-print("Execução | Score")
-for i, score in enumerate(scores, 1):
-    print(f"{i:8d} | {score}")
-mean_score = np.mean(scores)
-print(f"Média dos scores: {mean_score:.2f}")    
-    
 
-# Gráfico de barra
-mean_score = np.mean(scores)
-plt.bar(range(1, len(scores) + 1), scores)
-plt.axhline(y=mean_score, color='r', linestyle='--', label=f'Média: {mean_score:.2f}')
-plt.xlabel('Execução')
-plt.ylabel('Score')
-plt.title('Desempenho do Jogo ao Longo das Execuções')
-plt.legend()
-
-# Adiciona rótulos de valor em cada barra
-for i, score in enumerate(scores, 1):
-    plt.text(i, score, f'{score}', ha='center', va='bottom')
-
-plt.xticks(range(1, len(scores) + 1))  # Define os ticks do eixo x como inteiros
-plt.grid(True)
-plt.show()
-'''
 # Tabela
 
 print("Scores de cada execução:")
@@ -461,8 +406,8 @@ fig, ax = plt.subplots()
 bar1 = ax.bar(x - bar_width/2, scores_b, bar_width, label='Score BFS')
 bar2 = ax.bar(x + bar_width/2, scores_d, bar_width, label='Score Dijkstra')
 
-ax.axhline(y=mean_score_b, color='r', linestyle='--', label=f'Média BFS: {mean_score_b:.2f}')
-ax.axhline(y=mean_score_d, color='g', linestyle='--', label=f'Média Dijkstra: {mean_score_d:.2f}')
+ax.axhline(y=mean_score_b, color='g', linestyle='--', label=f'Média BFS: {mean_score_b:.2f}')
+ax.axhline(y=mean_score_d, color='r', linestyle='--', label=f'Média Dijkstra: {mean_score_d:.2f}')
 
 ax.set_xlabel('Execução')
 ax.set_ylabel('Score')
